@@ -22,6 +22,7 @@
     "vite-plugin-node-polyfills": "^0.25.0"
   },
   "dependencies": {
+    "@magicblock-labs/ephemeral-rollups-sdk": "^0.8.1",
     "@magicblock-labs/gum-react-sdk": "^3.0.10",
     "@radix-ui/react-slot": "^1.2.4",
     "@solana/wallet-adapter-base": "^0.9.27",
