@@ -2,23 +2,25 @@
 
 A fully functional 3D city-building simulation game that runs on the Solana blockchain, utilizing **MagicBlock Ephemeral Rollups** for high-speed, gas-free gameplay with eventual settlement on the mainnet.
 
+![alt text](image.png)
+
 ## 🏗 Architecture
 
-The project follows a hybrid architecture where the game state is managed on a high-performance Ephemeral Rollup (ER) for real-time interaction, while the assets and final state are secured on Solana.
+The project follows a hybrid architecture where the **Client** handles the rich, visual simulation (e.g., power propagation, traffic), while the **Blockchain (Ephemeral Rollup)** enforces the authoritative state (tiles, money, population) and settlement.
 
 ```mermaid
 graph TD
     User[User] -->|Plays Game| Frontend[React + Three.js Frontend]
     
-    subgraph "Client Side"
-        Frontend -->|Simulates| GameLoop[Local Game Loop]
+    subgraph "Client Side (Rich Simulation)"
+        Frontend -->|Simulates Power/Traffic| GameLoop[Local Game Loop (JS)]
         GameLoop -->|Renders| ThreeJS[Three.js Renderer]
     end
     
-    subgraph "Blockchain Layer"
-        Frontend -->|Actions (Delegate/Commit)| MagicBlock[MagicBlock Ephemeral Rollup]
-        MagicBlock -->|High Speed Tx| GameState[Game State (ER)]
-        GameState -->|Settle State| SolanaMainnet[Solana Mainnet]
+    subgraph "Blockchain Layer (Authoritative State)"
+        Frontend -->|Actions (Place/Bulldoze)| MagicBlock[MagicBlock Ephemeral Rollup]
+        MagicBlock -->|Validates Rules (Rust)| GameState[Game State (ER)]
+        GameState -->|Periodically Settles| SolanaMainnet[Solana Mainnet]
     end
     
     subgraph "Smart Contracts (Anchor)"
@@ -28,16 +30,18 @@ graph TD
 ```
 
 ### Components
-1.  **Frontend (Web)**: Built with **React** and **Three.js**, responsible for the 3D visualization and local simulation interpolation.
-2.  **Simulation Engine**: A deterministic JavaScript-based engine that runs both on the client (for prediction) and strictly on the chain/rollup (for validation).
-3.  **Ephemeral Rollup (MagicBlock)**: Handles the intensive game loop transactions (`stepSimulation`, `placeBuilding`) at zero cost and millisecond latency.
-4.  **Solana Mainnet**: Stores the permanent city assets and allows for "DePIN" style ownership of city states.
+1.  **Frontend (Web)**: Built with **React** and **Three.js**, responsible for the 3D visualization, user input, and the "rich" simulation logic (power BFS, vehicle traffic) which is too heavy for on-chain execution.
+2.  **Ephemery Rollup (MagicBlock)**: Runs the **Rust-based Smart Contract** for high-frequency interactions (`place_building`, `bulldoze`). It maintains the authoritative state of the map (tiles) and economy (money) with millisecond latency and zero gas.
+3.  **Solana Mainnet**: Serves as the settlement layer where the final city state is persisted and assets are owned.
+4.  **Local Game Loop**: A JavaScript engine running in the browser that interpolates state between blockchain updates and handles visual-only mechanics.
 
 ---
 
 ## 🎮 Game Mechanics
 
  The simulation runs on a **16x16 grid** where every tile represents a specific structure or zone.
+
+ ![alt text](image-1.png)
 
 ### 1. The Simulation Loop
 The city evolves through time steps. In each `terminate` or `stepSimulation` call:
